@@ -1,0 +1,34 @@
+
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: Maven@4
+  displayName: 'Build and Run Unit Tests'
+  inputs:
+    mavenPomFile: 'pom.xml'
+    goals: 'clean test surefire-report:report'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.17'
+    mavenVersionOption: 'Default'
+
+- task: PublishTestResults@2
+  displayName: 'Publish Unit Test Results'
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    failTaskOnFailedTests: true
+
+- task: PublishPipelineArtifact@1
+  displayName: 'Publish Maven Test Reports'
+  condition: succeededOrFailed()
+  inputs:
+    targetPath: '$(System.DefaultWorkingDirectory)/target/site'
+    artifact: 'Maven-Test-Reports'
+    publishLocation: 'pipeline'
